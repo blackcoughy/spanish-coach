@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>English Coach</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a2e1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 0 0 40px 0;
+  }
+
+  header {
+    background: #16331e;
+    padding: 16px 20px;
+    text-align: center;
+    border-bottom: 1px solid #0f6034;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #45e97e;
+    letter-spacing: 0.5px;
+  }
+
+  .settings-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #8a9a8a;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .settings-btn:hover { color: #45e97e; }
+
+  /* Settings Panel */
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .settings-overlay.open { display: flex; }
+
+  .settings-panel {
+    background: #16331e;
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid #0f6034;
+  }
+
+  .settings-panel h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #45e97e;
+  }
+
+  .settings-panel label {
+    display: block;
+    font-size: 13px;
+    color: #8a9a8a;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .settings-panel label:first-of-type { margin-top: 0; }
+
+  .settings-panel input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    background: #1a2e1a;
+    border: 1px solid #0f6034;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 15px;
+  }
+
+  .settings-save {
+    margin-top: 24px;
+    width: 100%;
+    padding: 14px;
+    background: #2eaf5e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Main content */
+  .container {
+    padding: 20px 16px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .dialect-badge {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .dialect-badge span {
+    display: inline-block;
+    background: #0f6034;
+    color: #b0c0b0;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    color: #8a9a8a;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  textarea {
+    width: 100%;
+    padding: 14px;
+    background: #16331e;
+    border: 1px solid #0f6034;
+    border-radius: 10px;
+    color: #e0e0e0;
+    font-size: 16px;
+    line-height: 1.5;
+    resize: none;
+    min-height: 60px;
+    font-family: inherit;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: #45e97e;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #2eaf5e;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.2s;
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .submit-btn:active:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+    color: #8a9a8a;
+  }
+
+  .loading.show { display: block; }
+
+  .loading .dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
+
+  /* Results */
+  .results {
+    display: none;
+    margin-top: 24px;
+  }
+
+  .results.show { display: block; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #0f6034;
+    margin: 20px 0;
+  }
+
+  .result-section {
+    margin-bottom: 20px;
+  }
+
+  .result-label {
+    font-size: 12px;
+    color: #45e97e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .result-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #e0e0e0;
+  }
+
+  .result-text.english {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .result-text.guess-back {
+    color: #a0c0a0;
+    font-style: italic;
+  }
+
+  .notes-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #b0c0b0;
+    margin-top: 8px;
+  }
+
+  .word-breakdown {
+    margin-top: 4px;
+  }
+
+  .word-entry {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(15, 96, 52, 0.5);
+  }
+
+  .word-entry:last-child { border-bottom: none; }
+
+  .word-english {
+    font-weight: 600;
+    color: #45e97e;
+    font-size: 16px;
+  }
+
+  .word-meaning {
+    color: #e0e0e0;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-top: 4px;
+  }
+
+  .grammar-flag {
+    background: #0f6034;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    border-left: 3px solid #45e97e;
+  }
+
+  .grammar-flag-title {
+    font-size: 13px;
+    color: #45e97e;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .grammar-flag-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #b0c0b0;
+  }
+
+  /* First-run overlay */
+  .first-run {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #1a2e1a;
+    z-index: 300;
+    padding: 60px 24px 40px;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .first-run.show { display: flex; }
+
+  .first-run h2 {
+    color: #45e97e;
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .first-run p {
+    color: #8a9a8a;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 340px;
+    margin-bottom: 24px;
+  }
+
+  .first-run input {
+    width: 100%;
+    max-width: 340px;
+    padding: 14px;
+    background: #16331e;
+    border: 1px solid #0f6034;
+    border-radius: 10px;
+    color: #e0e0e0;
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .first-run button {
+    width: 100%;
+    max-width: 340px;
+    padding: 16px;
+    background: #2eaf5e;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Error */
+  .error {
+    display: none;
+    background: #1a3a1a;
+    border: 1px solid #e9b045;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 16px;
+    color: #e0d0a0;
+    font-size: 14px;
+  }
+
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- First Run Setup -->
+<div class="first-run" id="firstRun">
+  <h2>English Coach</h2>
+  <p>Pega tu clave de API de OpenRouter para comenzar. Se guarda solo en tu dispositivo y nunca se comparte.</p>
+  <input type="password" id="firstRunKey" placeholder="sk-or-...">
+  <button onclick="saveFirstRun()">Comenzar</button>
+</div>
+
+<!-- Header -->
+<header>
+  <h1>English Coach</h1>
+  <button class="settings-btn" onclick="openSettings()">&#9881;</button>
+</header>
+
+<!-- Settings Overlay -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-panel">
+    <h2>Ajustes</h2>
+    <label>Clave de API de OpenRouter</label>
+    <input type="password" id="settingsKey" placeholder="sk-or-...">
+    <button class="settings-save" onclick="saveSettings()">Guardar</button>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+  <div class="dialect-badge">
+    <span>Inglés americano</span>
+  </div>
+
+  <div class="input-group">
+    <label>Lo que quieres decir (español)</label>
+    <textarea id="spanishInput" placeholder="p. ej. ¿Qué hora es?" rows="2"></textarea>
+  </div>
+
+  <div class="input-group">
+    <label>Tu intento en inglés</label>
+    <textarea id="englishInput" placeholder="p. ej. What hour is?" rows="2"></textarea>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Enviar</button>
+
+  <div class="error" id="errorBox"></div>
+
+  <div class="loading" id="loading">
+    <span>Analizando tu inglés<span class="dots"></span></span>
+  </div>
+
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+  // ---- Init ----
+  function init() {
+    const key = localStorage.getItem('ec_api_key');
+    if (!key) {
+      document.getElementById('firstRun').classList.add('show');
+    }
+  }
+
+  // ---- First Run ----
+  function saveFirstRun() {
+    const key = document.getElementById('firstRunKey').value.trim();
+    if (!key) return;
+    localStorage.setItem('ec_api_key', key);
+    document.getElementById('firstRun').classList.remove('show');
+  }
+
+  // ---- Settings ----
+  function openSettings() {
+    const key = localStorage.getItem('ec_api_key') || '';
+    document.getElementById('settingsKey').value = key;
+    document.getElementById('settingsOverlay').classList.add('open');
+  }
+
+  function closeSettingsOutside(e) {
+    if (e.target === document.getElementById('settingsOverlay')) {
+      document.getElementById('settingsOverlay').classList.remove('open');
+    }
+  }
+
+  function saveSettings() {
+    const key = document.getElementById('settingsKey').value.trim();
+    if (key) localStorage.setItem('ec_api_key', key);
+    document.getElementById('settingsOverlay').classList.remove('open');
+  }
+
+  // ---- Build System Prompt ----
+  function buildSystemPrompt() {
+    return `Eres un coach de inglés. La usuaria es hispanohablante nativa (español latinoamericano) y está aprendiendo inglés americano a nivel intermedio. Te dará:
+1. Una frase en español (lo que quiere decir)
+2. Su intento en inglés (su traducción)
+
+Tu trabajo es responder con un análisis estructurado, ESCRITO COMPLETAMENTE EN ESPAÑOL (salvo las frases y palabras en inglés que estás enseñando). Usa inglés americano estándar como dialecto de referencia. Cuando una palabra o construcción varíe de forma significativa entre el inglés americano y el británico, o entre registros formales e informales, menciónalo brevemente.
+
+Usa el registro conversacional natural del inglés americano cotidiano. Señala cuándo una forma más formal sería la esperada (trabajo, trámites, desconocidos mayores).
+
+Responde EXACTAMENTE en este formato — usa estos encabezados exactos con ** alrededor:
+
+**Tu intento en inglés:** [repite su intento en inglés tal cual]
+
+**Inglés correcto:** [la traducción natural y correcta en inglés americano]
+
+**Lo que tu intento realmente dijo:** [traduce su intento de inglés de vuelta al español — muestra lo que un angloparlante realmente habría entendido]
+
+**Notas sobre tu intento:** [un párrafo corto en español explicando la diferencia — qué hizo bien, qué salió mal, cómo lo habría percibido quien escucha]
+
+**Desglose palabra por palabra:**
+Para cada palabra de la frase CORRECTA en inglés, escribe una línea que empiece con la palabra en **negrita**, un guion, y luego su significado en español y por qué se eligió esa palabra sobre las alternativas que la estudiante podría esperar. Formato de ejemplo:
+- **What** — "Qué." El interrogativo estándar.
+- **time** — "hora/tiempo." En inglés se usa "time" para la hora del reloj, nunca "hour" en esta pregunta.
+
+**Nota de gramática** (incluir SOLO cuando la respuesta correcta usa una estructura gramatical que la estudiante claramente no conocía, como el auxiliar "do", los phrasal verbs, el presente perfecto, el orden de los adjetivos, los verbos modales, etc.):
+- Título que describa el concepto gramatical
+- Explicación práctica breve con el patrón o la regla, incluyendo tablas de conjugación si ayudan
+
+Mantén un tono cálido y alentador pero preciso. No simplifiques — la estudiante quiere entender el panorama completo. No uses encabezados de markdown (#). Usa ** para negrita solo en las etiquetas de sección y en las palabras individuales en inglés del desglose.`;
+  }
+
+  // ---- Submit ----
+  async function handleSubmit() {
+    const spanish = document.getElementById('spanishInput').value.trim();
+    const english = document.getElementById('englishInput').value.trim();
+    const apiKey = localStorage.getItem('ec_api_key');
+
+    if (!apiKey) {
+      document.getElementById('firstRun').classList.add('show');
+      return;
+    }
+
+    if (!english || !spanish) {
+      showError('Por favor llena los dos campos.');
+      return;
+    }
+
+    hideError();
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('submitBtn').disabled = true;
+
+    const userMessage = `Lo que quiero decir (español): ${spanish}\nMi intento en inglés: ${english}`;
+
+    try {
+      const reqBody = {
+        model: 'google/gemma-4-31b-it:free',
+        models: [
+          'google/gemma-4-31b-it:free',
+          'nvidia/nemotron-3-super-120b-a12b:free',
+          'google/gemma-4-26b-a4b-it:free'
+        ],
+        messages: [
+          { role: 'system', content: buildSystemPrompt() },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.3
+      };
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'English Coach'
+        },
+        body: JSON.stringify(reqBody)
+      });
+
+      const rawText = await response.text();
+
+      if (!response.ok) {
+        let errMsg = `Error de API (${response.status})`;
+        try {
+          const errData = JSON.parse(rawText);
+          errMsg = errData.error?.message || errMsg;
+        } catch(e) {}
+        if (response.status === 401) {
+          openSettings();
+          throw new Error('Tu clave de API es inválida o expiró. Pega una clave nueva de OpenRouter en Ajustes (openrouter.ai/keys).');
+        }
+        if (response.status === 402) {
+          throw new Error('Tu cuenta de OpenRouter no tiene créditos. Agrega créditos en openrouter.ai/credits.');
+        }
+        if (response.status === 429) {
+          throw new Error('Se alcanzó el límite de los modelos gratuitos por ahora. Espera un minuto e intenta de nuevo (el límite diario se reinicia cada día).');
+        }
+        throw new Error(errMsg + ' | Estado: ' + response.status);
+      }
+
+      const data = JSON.parse(rawText);
+      if (data.error) {
+        throw new Error(data.error.message || 'Error del proveedor');
+      }
+      const content = data.choices[0].message.content;
+      renderResults(content);
+
+    } catch (err) {
+      showError(err.message || 'Algo salió mal. Intenta de nuevo.');
+    } finally {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('submitBtn').disabled = false;
+    }
+  }
+
+  // ---- Render Results ----
+  function renderResults(content) {
+    const container = document.getElementById('results');
+
+    // Parse sections using line-start headers only (avoids matching bold words inside breakdown)
+    const sections = {};
+    const knownHeaders = [
+      { key: 'guess', pattern: /tu intento en ingl/i },
+      { key: 'correct', pattern: /ingl.s correcto/i },
+      { key: 'backTranslation', pattern: /lo que tu intento/i },
+      { key: 'notes', pattern: /notas sobre tu intento/i },
+      { key: 'breakdown', pattern: /desglose palabra/i },
+      { key: 'grammar', pattern: /nota de gram/i }
+    ];
+
+    // Find all section header positions (must be at line start)
+    const headerRegex = /^[ \t]*\*\*([^*]+)\*\*:?[ \t]*/gm;
+    const headerPositions = [];
+    let m;
+    while ((m = headerRegex.exec(content)) !== null) {
+      const label = m[1].trim();
+      let matchedKey = null;
+      for (const h of knownHeaders) {
+        if (h.pattern.test(label)) { matchedKey = h.key; break; }
+      }
+      if (matchedKey) {
+        headerPositions.push({ key: matchedKey, label: label, start: m.index, end: m.index + m[0].length });
+      }
+    }
+
+    // Extract body text between each header and the next
+    for (let i = 0; i < headerPositions.length; i++) {
+      const start = headerPositions[i].end;
+      const end = (i + 1 < headerPositions.length) ? headerPositions[i + 1].start : content.length;
+      const body = content.slice(start, end).trim();
+      if (headerPositions[i].key === 'grammar') {
+        sections.grammarTitle = headerPositions[i].label.replace(/nota de gram.tica/i, '').replace(/^[\s\-—:]+/, '').replace(/[\s\-—:]+$/, '').trim();
+        sections.grammar = body;
+      } else {
+        sections[headerPositions[i].key] = body;
+      }
+    }
+
+    // Build HTML
+    let html = '<hr class="divider">';
+
+    if (sections.guess) {
+      html += `
+        <div class="result-section">
+          <div class="result-label">Tu intento en inglés</div>
+          <div class="result-text english">${escapeHtml(sections.guess)}</div>
+        </div>`;
+    }
+
+    if (sections.correct) {
+      html += `
+        <div class="result-section">
+          <div class="result-label">Inglés correcto</div>
+          <div class="result-text english">${escapeHtml(sections.correct)}</div>
+        </div>`;
+    }
+
+    if (sections.backTranslation) {
+      html += `
+        <div class="result-section">
+          <div class="result-label">Lo que tu intento realmente dijo</div>
+          <div class="result-text guess-back">${escapeHtml(sections.backTranslation)}</div>
+        </div>`;
+    }
+
+    if (sections.notes) {
+      html += `
+        <div class="result-section">
+          <div class="result-label">Notas sobre tu intento</div>
+          <div class="notes-text">${formatInlineBold(escapeHtml(sections.notes))}</div>
+        </div>`;
+    }
+
+    if (sections.breakdown) {
+      html += `
+        <hr class="divider">
+        <div class="result-section">
+          <div class="result-label">Desglose palabra por palabra</div>
+          <div class="word-breakdown">${formatBreakdown(sections.breakdown)}</div>
+        </div>`;
+    }
+
+    if (sections.grammar) {
+      const title = sections.grammarTitle || 'Nota de gramática';
+      html += `
+        <div class="grammar-flag">
+          <div class="grammar-flag-title">${escapeHtml(title)}</div>
+          <div class="grammar-flag-text">${formatInlineBold(escapeHtml(sections.grammar))}</div>
+        </div>`;
+    }
+
+    html += '<hr class="divider">';
+
+    container.innerHTML = html;
+    container.classList.add('show');
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---- Format Helpers ----
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatInlineBold(str) {
+    return str.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function formatBreakdown(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    let html = '';
+
+    for (const line of lines) {
+      const cleaned = line.replace(/^[\s\-•]+/, '').trim();
+      if (!cleaned) continue;
+
+      const match = cleaned.match(/^\*\*([^*]+)\*\*\s*[\-—:]+\s*(.*)/);
+      if (match) {
+        html += `
+          <div class="word-entry">
+            <div class="word-english">${escapeHtml(match[1])}</div>
+            <div class="word-meaning">${formatInlineBold(escapeHtml(match[2]))}</div>
+          </div>`;
+      } else {
+        html += `
+          <div class="word-entry">
+            <div class="word-meaning">${formatInlineBold(escapeHtml(cleaned))}</div>
+          </div>`;
+      }
+    }
+
+    return html;
+  }
+
+  // ---- Error Handling ----
+  function showError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('errorBox').classList.remove('show');
+  }
+
+  // ---- Boot ----
+  init();
+</script>
+</body>
+</html>
